@@ -72,7 +72,7 @@ jar {
 }
 
 tasks.register('copyDependencies', Copy) {
-    group 'build'D
+    group 'build'
     from configurations.runtimeClasspath
     into "release/deps/"
 }
