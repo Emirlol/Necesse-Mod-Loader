@@ -1,0 +1,127 @@
+plugins {
+    id 'java-library'
+}
+
+allprojects {
+    repositories {
+
+        // SpongePowered Maven repository for Mixins
+        maven {
+            url "https://repo.spongepowered.org/maven/"
+        }
+        // FabricMC Maven repository for Fabric Loader
+        maven {
+            url "https://maven.fabricmc.net/"
+        }
+
+        // Maven Central for core dependencies
+        mavenCentral() {
+            content {
+                // Force ASM and ME to come from the fabric maven.
+                // This ensures that the version has been mirrored for use by the launcher/installer.
+                excludeGroupByRegex "org.ow2.asm"
+                excludeGroupByRegex "io.github.llamalad7"
+            }
+        }
+    }
+}
+
+version = "$provider_version"
+group = "me.rime"
+archivesBaseName = "necesse-fabric-modloader"
+
+dependencies {
+    api 'com.google.guava:guava:33.0.0-jre'
+    api 'com.google.code.gson:gson:2.9.1'
+
+    // Fabric dependencies
+    api "net.fabricmc:fabric-loader:$loader_version"
+    api "net.fabricmc:tiny-mappings-parser:0.2.2.14"
+    api "net.fabricmc:access-widener:2.1.0"
+
+    // Mixin dependencies
+    api "org.ow2.asm:asm:$asm_version"
+    api "org.ow2.asm:asm-analysis:$asm_version"
+    api "org.ow2.asm:asm-commons:$asm_version"
+    api "org.ow2.asm:asm-tree:$asm_version"
+    api "org.ow2.asm:asm-util:$asm_version"
+    api("net.fabricmc:sponge-mixin:$mixin_version") {
+        exclude module: 'launchwrapper'
+        exclude group: 'com.google.guava'
+        exclude group: 'com.google.code.gson'
+    }
+    api annotationProcessor("io.github.llamalad7:mixinextras-fabric:$mixin_extras_version")
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+        }
+    }
+}
+
+jar {
+    manifest {
+        attributes(
+                'Class-Path': configurations.runtimeClasspath.collect { it.getName() }.join(' '),
+                'Specification-Version': 8.0,
+                'Multi-Release': 'true'
+        )
+    }
+}
+
+tasks.register('copyDependencies', Copy) {
+    group 'build'D
+    from configurations.runtimeClasspath
+    into "release/deps/"
+}
+
+assemble {
+    group 'build'
+    dependsOn 'jar'
+    dependsOn 'copyDependencies'
+}
+
+def clientLaunchString = "__GL_THREADED_OPTIMIZATIONS=0 java -Dfabric.skipMcProvider=true -Dfabric.gameJarPath=\"/home/Rime/.local/share/Steam/steamapps/common/Necesse/Necesse.jar\" -classpath \"necesse-fabric-modloader-${provider_version}.jar:deps/*\" net.fabricmc.loader.launch.knot.KnotClient"
+def serverLaunchString = "__GL_THREADED_OPTIMIZATIONS=0 java -Dfabric.skipMcProvider=true -Dfabric.gameJarPath=\"/home/Rime/.local/share/Steam/steamapps/common/Necesse/Server.jar\" -classpath \"necesse-fabric-modloader-${provider_version}.jar:deps/*\" net.fabricmc.loader.launch.knot.KnotServer"
+
+tasks.register('generateLaunchScripts') {
+    doLast {
+        new File("release/", "launch.sh").text = "#!/bin/bash\n" + clientLaunchString
+        new File("release/", "launch.bat").text = clientLaunchString
+        new File("release/", "launchServer.sh").text = "#!/bin/bash\n" + serverLaunchString
+        new File("release/", "launchServer.bat").text = serverLaunchString
+    }
+}
+
+tasks.register('buildAndCopy', Copy) {
+    dependsOn generateLaunchScripts
+    group 'build'
+    dependsOn 'assemble'
+    from "build/libs/"
+    into "release/"
+}
+
+tasks.register('runClient') {
+    dependsOn buildAndCopy
+    group 'build'
+    doLast {
+        exec {
+            workingDir projectDir.absolutePath + "/release"
+            commandLine "./launch.sh"
+        }
+    }
+}
+
+tasks.register('runServer') {
+    dependsOn buildAndCopy
+    group 'build'
+    doLast {
+        exec {
+            workingDir projectDir.absolutePath + "/release"
+            println projectDir.absolutePath + "/release"
+            commandLine "./launchServer.sh"
+        }
+    }
+}
