@@ -2,7 +2,7 @@
 
 Allows Fabric mods to be loaded into Necesse!
 
-Currently very WIP.
+Currently very WIP. Game paths (and a bunch of stuff) are hardcoded for my machine as it's a very early version and automating that stuff would've been a waste of time considering that making it work is the priority.
 
 ## How to build
 1. Import the project into IntelIJ.
