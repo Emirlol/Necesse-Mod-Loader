@@ -2,11 +2,12 @@ package me.rime.necesse.modloader;
 
 import java.lang.reflect.Field;
 
+// Unused for now, will get around to fixing it and starting to use it later. TODO
 public class NecesseMetadataLookup {
 	private final String name;
 	private int appID = -1;
 	private final String version;
-	private int hotfix = -1; // These can't be left uninitialized, their value would be 0 and 0 is a valid value for them, so there'd be no way to distinguish uninitialized vs zero value.
+	private int hotfix = -1; // These can't be left uninitialized, their value would be 0 and 0 is a valid value for them, so there's no way to distinguish uninitialized vs zero value.
 
 	public NecesseMetadataLookup() throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
 		Class<?> gameInfoClass = Class.forName("necesse.engine.GameInfo");

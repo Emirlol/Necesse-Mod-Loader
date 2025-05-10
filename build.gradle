@@ -95,8 +95,20 @@ tasks.register('generateLaunchScripts') {
     }
 }
 
+// Steam restarts the app when launched outside of steam, and having this file in the run dir bypasses that
+// Thanks to Fair for this
+tasks.register('createAppID') {
+    group "build"
+    description "Creates steam_appid.txt file"
+
+    doLast {
+        new File("release/", "steam_appid.txt").text = "1169040"
+    }
+}
+
 tasks.register('buildAndCopy', Copy) {
-    dependsOn generateLaunchScripts
+    description "Builds the provider and copies the relevant files to the release directory"
+    dependsOn(generateLaunchScripts, createAppID)
     group 'build'
     dependsOn 'assemble'
     from "build/libs/"
