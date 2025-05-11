@@ -29,6 +29,7 @@ public class NecesseGameProvider implements GameProvider {
 	private String entrypoint;
 	private String platformTarget;
 	private String abstractPlatform;
+	private NecesseMetadataLookup metadataLookup;
 	private Path gameJar;
 	private Collection<Path> validParentClassPath; // computed parent class path restriction (loader+deps)
 	private final GameTransformer transformer = new GameTransformer(new EntrypointPatch());
@@ -40,29 +41,31 @@ public class NecesseGameProvider implements GameProvider {
 
 	@Override
 	public String getGameName() {
-		return "Necesse";
+		return metadataLookup.getName();
 	}
 
 	@Override
 	public String getRawGameVersion() {
-		return "0.32.1";
+		return metadataLookup.getVersion() + "-hotfix" + metadataLookup.getHotfix();
 	}
 
 	@Override
 	public String getNormalizedGameVersion() {
-		return "0.32.1";
+		return metadataLookup.getVersion();
 	}
 
 	@Override
 	public Collection<BuiltinMod> getBuiltinMods() {
-		HashMap<String, String> contactMap = new HashMap<>();
-		contactMap.put("homepage", "https://necessegame.com/");
-		contactMap.put("wiki", "https://necessewiki.com/");
-		contactMap.put("discord", "https://discord.gg/YBhNh52dpy");
-		contactMap.put("steam", "https://store.steampowered.com/news/app/1169040");
-		contactMap.put("x", "https://x.com/NecesseGame");
-		contactMap.put("reddit", "https://www.reddit.com/r/Necesse");
-		contactMap.put("youtube", "https://www.youtube.com/@Necesse");
+		Map<String, String> contactMap = Map.of(
+				"discord", metadataLookup.getDiscordInviteUrl(),
+				"steam", metadataLookup.getSteamNewsUrl(),
+				"twitter", metadataLookup.getTwitterUrl(),
+				"x", metadataLookup.getxUrl(),
+				"reddit", metadataLookup.getRedditUrl(),
+				"youtube", metadataLookup.getYoutubeUrl(),
+				"homepage", metadataLookup.getWebsiteUrl(),
+				"wiki", metadataLookup.getWikiUrl()
+		);
 
 		BuiltinModMetadata.Builder modMetadata = new BuiltinModMetadata.Builder(getGameId(), getNormalizedGameVersion())
 														 .setName(getGameName())
@@ -153,13 +156,16 @@ public class NecesseGameProvider implements GameProvider {
 		} catch (IOException e) {
 			throw ExceptionUtil.wrap(e);
 		}
+
 		if (gameJar == null) throw new RuntimeException("Unable to locate game jar!");
+		else metadataLookup = new NecesseMetadataLookup(gameJar);
 
 		return true;
 	}
 
 	@Override
 	public void initialize(FabricLauncher launcher) {
+
 		launcher.setValidParentClassPath(validParentClassPath);
 		Log.info(LogCategory.GAME_PROVIDER, "Valid classpath: " + validParentClassPath);
 		transformer.locateEntrypoints(launcher, List.of(gameJar));

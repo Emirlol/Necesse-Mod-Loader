@@ -4,8 +4,6 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.impl.FabricLoaderImpl;
-import net.fabricmc.loader.impl.util.log.Log;
-import net.fabricmc.loader.impl.util.log.LogCategory;
 
 import java.io.File;
 
@@ -22,7 +20,6 @@ public class NecesseHooks {
 	}
 
 	public static void startServer() {
-		Log.info(LogCategory.LOG, "Starting server...");
 		File runDir = new File(".");
 
 		FabricLoaderImpl loader = FabricLoaderImpl.INSTANCE;
